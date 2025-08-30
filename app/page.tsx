@@ -1,10 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-
-// Force dynamic rendering
-export const dynamic = 'force-dynamic';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { appConfig } from '@/config/app.config';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -61,12 +58,8 @@ export default function AISandboxPage() {
   ]);
   const [aiChatInput, setAiChatInput] = useState('');
   const [aiEnabled] = useState(true);
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const [aiModel, setAiModel] = useState(() => {
-    const modelParam = searchParams.get('model');
-    return appConfig.ai.availableModels.includes(modelParam || '') ? modelParam! : appConfig.ai.defaultModel;
-  });
+  const [aiModel, setAiModel] = useState(appConfig.ai.defaultModel);
   const [urlOverlayVisible, setUrlOverlayVisible] = useState(false);
   const [urlInput, setUrlInput] = useState('');
   const [urlStatus, setUrlStatus] = useState<string[]>([]);
