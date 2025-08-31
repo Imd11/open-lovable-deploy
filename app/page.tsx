@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+
+// Force dynamic rendering to handle useSearchParams
+export const dynamic = 'force-dynamic';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { appConfig } from '@/config/app.config';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -59,6 +62,7 @@ export default function AISandboxPage() {
   const [aiChatInput, setAiChatInput] = useState('');
   const [aiEnabled] = useState(true);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [aiModel, setAiModel] = useState(appConfig.ai.defaultModel);
   const [urlOverlayVisible, setUrlOverlayVisible] = useState(false);
   const [urlInput, setUrlInput] = useState('');
