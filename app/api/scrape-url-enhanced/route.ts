@@ -31,8 +31,11 @@ export async function POST(request: NextRequest) {
     
     const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY;
     if (!FIRECRAWL_API_KEY) {
+      console.error('[scrape-url-enhanced] FIRECRAWL_API_KEY not set');
       throw new Error('FIRECRAWL_API_KEY environment variable is not set');
     }
+    
+    console.log('[scrape-url-enhanced] API Key available, length:', FIRECRAWL_API_KEY.length);
     
     // Make request to Firecrawl API with maxAge for 500% faster scraping
     const firecrawlResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
@@ -59,8 +62,11 @@ export async function POST(request: NextRequest) {
     
     if (!firecrawlResponse.ok) {
       const error = await firecrawlResponse.text();
-      throw new Error(`Firecrawl API error: ${error}`);
+      console.error('[scrape-url-enhanced] Firecrawl API error:', firecrawlResponse.status, error);
+      throw new Error(`Firecrawl API error (${firecrawlResponse.status}): ${error}`);
     }
+    
+    console.log('[scrape-url-enhanced] Firecrawl API response OK');
     
     const data = await firecrawlResponse.json();
     
@@ -109,6 +115,57 @@ ${sanitizedMarkdown}
     
   } catch (error) {
     console.error('[scrape-url-enhanced] Error:', error);
+    
+    // Fallback: Try a simple fetch approach
+    try {
+      console.log('[scrape-url-enhanced] Trying fallback method...');
+      
+      const fallbackResponse = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; OpenLovable/1.0)'
+        }
+      });
+      
+      if (fallbackResponse.ok) {
+        const html = await fallbackResponse.text();
+        
+        // Extract basic info from HTML
+        const titleMatch = html.match(/<title>(.*?)<\/title>/i);
+        const title = titleMatch ? titleMatch[1] : 'Website';
+        
+        const descMatch = html.match(/<meta\s+name=[\"']description[\"']\s+content=[\"'](.*?)[\"']/i);
+        const description = descMatch ? descMatch[1] : '';
+        
+        const basicContent = `
+Title: ${title}
+Description: ${description}
+URL: ${url}
+
+This is a website that needs to be recreated. Please analyze the content and create a similar interface.
+        `.trim();
+        
+        return NextResponse.json({
+          success: true,
+          url,
+          content: basicContent,
+          structured: {
+            title,
+            description,
+            content: basicContent,
+            url
+          },
+          metadata: {
+            scraper: 'fallback',
+            timestamp: new Date().toISOString(),
+            contentLength: basicContent.length
+          },
+          message: 'URL processed with fallback method (basic HTML parsing)'
+        });
+      }
+    } catch (fallbackError) {
+      console.error('[scrape-url-enhanced] Fallback also failed:', fallbackError);
+    }
+    
     return NextResponse.json({
       success: false,
       error: (error as Error).message
